@@ -55,7 +55,7 @@ public static class Types
         Data<List, A>, 
         IReadOnlyList<A>,
         Monoid<List<A>>,
-        Show<List<A>>
+        Show<List<A>> 
     {
         public int Count => this.Count();
 
@@ -144,9 +144,9 @@ public static class Types
 
         public static List<A> operator +(List<A> a, List<A> b) => Combine(a, b);
 
-        public static ShowS ShowPrec(Int p, List<A> x) =>
-            s =>
-                Show.ShowList__(Show.ShowS<A>, x)(s);
+        // public static ShowS ShowPrec(Int p, List<A> x)  =>
+        //     s =>
+        //         Show.ShowList__(Show.ShowS, x)(s);
             
     }
 
@@ -165,7 +165,7 @@ public static class Types
 }
 
 public class NonEmptyEnumerator<T> : IEnumerator<T>, IEnumerator, IDisposable
-    where T : notnull
+    
 {
     private NonEmpty<T> _list;
     private bool _started = false;

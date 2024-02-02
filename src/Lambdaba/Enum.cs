@@ -557,7 +557,7 @@ public interface Show<A>
 
     public static virtual ShowS ShowList(Types.List<A> xs) =>
         s => 
-            Show.ShowList__(Show.ShowS<A>, xs)(s);
+            Show.ShowList__(Show.ShowS, xs)(s);
 }
 
 

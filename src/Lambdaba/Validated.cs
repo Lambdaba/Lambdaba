@@ -1,4 +1,5 @@
-﻿using static Lambdaba.Base;
+﻿using System;
+using static Lambdaba.Base;
 
 namespace Lambdaba;
 
