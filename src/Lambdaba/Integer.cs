@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 
 namespace Lambdaba;
 
@@ -16,7 +17,13 @@ public abstract record Integer :
         };
        
     public static Integer ToEnum(Base.Int x) => throw new NotImplementedException();
+
+    public static Integer One => new IS(1);
+
+    public static implicit operator Integer(int v)
+     => new IS(v);
 }
+   
 
 public record IS(int Value) : Integer;
 

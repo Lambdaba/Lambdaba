@@ -1,4 +1,5 @@
-﻿using Lambdaba.Data;
+﻿using System;
+using Lambdaba.Data;
 using static Lambdaba.Base;
 
 namespace Lambdaba;
@@ -23,4 +24,9 @@ public static class DataExtensions
     public static A MAppend<A>(this A a, A b) 
         where A : Monoid<A> =>
             A.Mappend(a, b);
+
+    // implement where
+    public static Data<T, A> Where<T, A>(this Data<T, A> t, Func<A, bool> predicate)
+        where T : Monad<T>, Alternative<T> =>
+            t.Where(predicate);
 }

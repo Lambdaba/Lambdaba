@@ -17,6 +17,8 @@ public record Rational : Ratio<Integer>
     public Rational(Integer numerator, Integer denominator) : base(numerator, denominator)
     {
     }
+
+    public static Rational One => new Rational(Integer.One, Integer.One);
 }
 
 public interface Real<A> : Num<A>, Prelude.Ord<A>

@@ -51,7 +51,21 @@ public static class Prelude
         static virtual A Max(A x, A y) => x <= y ? y : x;
 
         static virtual A Min(A x, A y) => x <= y ? x : y;
+
+        
     }
 
- 
+    public static A Fst<A, B>((A, B) pair) =>
+        pair switch
+        {
+            (var x, _) => x
+        };
+
+    public static B Snd<A, B>((A, B) pair) =>
+        pair switch
+        {
+            (_, var y) => y
+        };
+
+
 }

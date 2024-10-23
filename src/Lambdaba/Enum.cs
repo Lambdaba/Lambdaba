@@ -1,4 +1,6 @@
 ﻿global using ShowS = System.Func<Lambdaba.Base.String, Lambdaba.Base.String>;
+using System;
+using System.Linq;
 using static Lambdaba.Base;
 using static Lambdaba.Types;
 using Char = Lambdaba.Base.Char;
@@ -75,7 +77,7 @@ public interface Enum<A>
     /// </summary>
     /// <param name="start"></param>
     /// <returns></returns>
-    static IEnumerable<Int> Infinite(Int start)
+    static System.Collections.Generic.IEnumerable<Int> Infinite(Int start)
     {
         Int current = start;
         while (Int.MaxBound > current)

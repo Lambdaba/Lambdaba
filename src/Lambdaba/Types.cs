@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Lambdaba.Data;
 using static Lambdaba.Base;
@@ -212,23 +215,3 @@ public class NonEmptyEnumerator<T> : IEnumerator<T>, IEnumerator, IDisposable
 
     public void Reset() => throw new NotImplementedException();
 }
-
-// public record Solo<A> : Data<A>, Semigroup<Solo<A>>, Monoid<Solo<A>> 
-//     where A : Semigroup<A>, Monoid<A>
-// {
-//     public A Value { get; }
-
-//     public Solo(A value)
-//     {
-//         Value = value;
-//     }
-
-//     public static Solo<A> operator +(Solo<A> a, Solo<A> b) => 
-//         new(a.Value + b.Value);
-
-//     public static Solo<A> STimes<B>(B n, Solo<A> a) where B : Integral<B> => 
-//         new(A.STimes(n, a.Value));
-
-//     public static Solo<A> Combine(Solo<A> a, Solo<A> b) => a + b;
-//     public static Solo<A> Mempty() => new(A.Mempty());
-// }

@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using Lambdaba;
 using Lambdaba.Data;
@@ -677,7 +678,7 @@ public static class Base
     /// <typeparam name="M"></typeparam>
     public interface Monad<M> : Applicative<M> where M : Monad<M>
     {
-        public static virtual Data<M, A> Return<A>(A a) =>
+        public static Data<M, A> Return<A>(A a) =>
             M.Pure(a);
 
 
@@ -742,8 +743,8 @@ public static class Base
     public static Data<M, Types.List<A>> Sequence<M, A>(Types.List<Data<M, A>> @as) where M : Monad<M> =>
         @as switch
         {
-        [] => M.Return((Types.List<A>)[]),
-        [var x, .. var xs] => M.Bind(x, a => M.FMap(xs => (Types.List<A>)new NonEmpty<A>(a, xs), Sequence(xs)))
+            [] => Monad<M>.Return((Types.List<A>)[]),
+            [var x, .. var xs] => M.Bind(x, a => M.FMap(xs => (Types.List<A>)new NonEmpty<A>(a, xs), Sequence(xs)))
         };
 
 
@@ -758,8 +759,8 @@ public static class Base
     public static Data<M, Unit> Sequence_<M, A>(Types.List<Data<M, A>> @as) where M : Monad<M> =>
         @as switch
         {
-        [] => M.Return(new Unit()),
-        [var x, .. var xs] => M.Bind(x, _ => Sequence_(xs))
+            [] => Monad<M>.Return(new Unit()),
+            [var x, .. var xs] => M.Bind(x, _ => Sequence_(xs))
         };
 
 
@@ -778,7 +779,7 @@ public static class Base
         Data<M, Types.List<B>> k(A a, Data<M, Types.List<B>> r) =>
             M.Bind(f(a), x => M.FMap(xs => (Types.List<B>)new NonEmpty<B>(x, xs), r));
 
-        return FoldR(k, M.Return((Types.List<B>)[]), @as);
+        return FoldR(k, Monad<M>.Return((Types.List<B>)[]), @as);
     }
 
     /// <summary>
@@ -792,7 +793,7 @@ public static class Base
     /// <returns></returns>
     public static Data<M, R> LiftM<M, A1, R>(Func<A1, R> f, Data<M, A1> m1) where M : Monad<M>
     {
-        Data<M, R> k(A1 a1) => M.Return(f(a1));
+        Data<M, R> k(A1 a1) => Monad<M>.Return(f(a1));
         return M.Bind(m1, k);
     }
 

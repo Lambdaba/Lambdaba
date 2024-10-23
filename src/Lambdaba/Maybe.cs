@@ -1,4 +1,5 @@
-﻿using static Lambdaba.Base;
+﻿using System;
+using static Lambdaba.Base;
 
 namespace Lambdaba;
 
@@ -40,6 +41,13 @@ public record Maybe :
             Just<A>(var t) => f(t),
             Nothing<A> _ => new Nothing<B>(),
             _ => throw new NotSupportedException()
+        };
+
+    public static Data<Maybe, A> Where<A>(Data<Maybe, A> t, Func<A, bool> predicate) =>
+        t switch
+        {
+            Just<A>(var a) when predicate(a) => t,
+            _ => new Nothing<A>()
         };
 
     public static Data<Maybe, C> SelectMany<A, B, C>(Data<Maybe, A> t, Func<A, Data<Maybe, B>> f, Func<A, B, C> project) =>
@@ -85,6 +93,12 @@ public record Maybe :
             Just<A> => a,
             _ => throw new NotImplementedException()
         };
+
+    internal static Maybe<A> Just<A>(A a)
+     => new Just<A>(a);
+
+    internal static Maybe<A> Nothing<A>()
+     => new Nothing<A>();
 }
 
 public abstract record Maybe<A> :

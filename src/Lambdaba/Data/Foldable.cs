@@ -1,4 +1,5 @@
-﻿using static Lambdaba.Base;
+﻿using System;
+using static Lambdaba.Base;
 using static Lambdaba.Data.Semigroup.Internal;
 
 namespace Lambdaba.Data;
