@@ -59,6 +59,12 @@ public abstract record Either<L> :
             _ => throw new NotSupportedException(),
         };
 
+    /// <summary>
+    /// Haskell style either function.
+    /// </summary>
+    public static T Either<T, A>(Func<L, T> leftF, Func<A, T> rightF, Data<Either<L>, A> e) =>
+        Match(e, leftF, rightF);
+
     public static Bool IsLeft<A>(Data<Either<L>, A> t) =>
         t switch
         {
