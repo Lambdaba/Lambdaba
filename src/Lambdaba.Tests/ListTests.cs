@@ -61,5 +61,30 @@
             Xunit.Assert.Equal(expected, x);
 
         }
+
+        [Fact]
+        public void TestTakeDrop()
+        {
+            Types.List<Base.Int> xs = [1, 2, 3, 4];
+            Assert.Equal([1, 2], List.Take(2, xs));
+            Assert.Equal([3, 4], List.Drop(2, xs));
+        }
+
+        [Fact]
+        public void TestSplitAt()
+        {
+            Types.List<Base.Int> xs = [1, 2, 3];
+            var res = List.SplitAt(2, xs);
+            Assert.Equal(([1, 2], [3]), res);
+        }
+
+        [Fact]
+        public void TestNullLastInit()
+        {
+            Types.List<Base.Int> xs = [1, 2, 3];
+            Assert.Equal(new False(), List.Null(xs));
+            Assert.Equal(3, List.Last(xs));
+            Assert.Equal([1, 2], List.Init(xs));
+        }
     }
 }

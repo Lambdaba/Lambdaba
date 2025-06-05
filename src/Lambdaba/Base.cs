@@ -922,6 +922,85 @@ public static class Base
     public static Func<A, Lst, Lst> MapFB<A, B, Elt, Lst>(Func<Elt, Lst, Lst> c, Func<A, Elt> f) =>
         (x, ys) => c(f(x), ys);
 
+    public static Types.List<A> Concat<A>(Types.List<Types.List<A>> xss) =>
+        xss switch
+        {
+            [] => [],
+            [var x, .. var xs] => Types.List<A>.Combine(x, Concat(xs)),
+            _ => throw new NotSupportedException()
+        };
+
+    public static Types.List<B> ConcatMap<A, B>(Func<A, Types.List<B>> f, Types.List<A> xs) =>
+        Concat(Map(f, xs));
+
+    public static Bool And(Types.List<Bool> xs) =>
+        xs switch
+        {
+            [] => new True(),
+            [False _, .. _] => new False(),
+            [True _, .. var rest] => And(rest),
+            _ => throw new NotSupportedException()
+        };
+
+    public static Bool Or(Types.List<Bool> xs) =>
+        xs switch
+        {
+            [] => new False(),
+            [True _, .. _] => new True(),
+            [False _, .. var rest] => Or(rest),
+            _ => throw new NotSupportedException()
+        };
+
+    public static Bool Any<A>(Func<A, Bool> p, Types.List<A> xs) =>
+        xs switch
+        {
+            [] => new False(),
+            [var x, .. var rest] => p(x) switch
+            {
+                True => new True(),
+                False => Any(p, rest),
+                _ => throw new NotSupportedException()
+            },
+            _ => throw new NotSupportedException()
+        };
+
+    public static Bool All<A>(Func<A, Bool> p, Types.List<A> xs) =>
+        xs switch
+        {
+            [] => new True(),
+            [var x, .. var rest] => p(x) switch
+            {
+                False => new False(),
+                True => All(p, rest),
+                _ => throw new NotSupportedException()
+            },
+            _ => throw new NotSupportedException()
+        };
+
+    public static A Sum<A>(Types.List<A> xs) where A : Num<A> =>
+        FoldR<A, A>((a, acc) => A.Add(a, acc), A.FromInteger(0), xs);
+
+    public static A Product<A>(Types.List<A> xs) where A : Num<A> =>
+        FoldR<A, A>((a, acc) => a * acc, A.FromInteger(1), xs);
+
+    public static A Maximum<A>(Types.List<A> xs) where A : Ord<A> =>
+        xs switch
+        {
+            [] => throw new InvalidOperationException("empty list"),
+            [var x] => x,
+            [var x, .. var rest] => A.Max(x, Maximum(rest)),
+            _ => throw new NotSupportedException()
+        };
+
+    public static A Minimum<A>(Types.List<A> xs) where A : Ord<A> =>
+        xs switch
+        {
+            [] => throw new InvalidOperationException("empty list"),
+            [var x] => x,
+            [var x, .. var rest] => A.Min(x, Minimum(rest)),
+            _ => throw new NotSupportedException()
+        };
+
     // TODO : implement when C# "extension everything" => c# 13 -ish
     // instance (Monoid a, Monoid b) => Monoid (a,b) where
     //         mempty = (mempty, mempty)
@@ -1019,6 +1098,16 @@ public static class Base
     public static Func<A, C> Compose<A, B, C>(Func<B, C> g, Func<A, B> f) => a => g(f(a));
 
     /// <summary>
+    /// Convert an uncurried function to a curried one.
+    /// </summary>
+    public static Func<A, B, C> Curry<A, B, C>(Func<(A, B), C> f) => (a, b) => f((a, b));
+
+    /// <summary>
+    /// Convert a curried function to a function on pairs.
+    /// </summary>
+    public static Func<(A, B), C> Uncurry<A, B, C>(Func<A, B, C> f) => t => f(t.Item1, t.Item2);
+
+    /// <summary>
     /// Flip(f) takes its (first) two arguments in the reverse order of f.
     /// </summary>
     /// <typeparam name="A"></typeparam>
@@ -1084,6 +1173,25 @@ public static class Base
     /// <returns></returns>
     public static Func<A, Func<A, A>> AsTypeOf<A>(A a) =>
         Const<A, A>();
+
+    /// <summary>
+    /// Abort evaluation with an exception carrying the given message.
+    /// </summary>
+    public static T Error<T>(String message) => throw new Exception(message);
+
+    /// <summary>
+    /// Placeholder for an unimplemented value.
+    /// </summary>
+    public static T Undefined<T>() => throw new NotImplementedException("undefined");
+
+    /// <summary>
+    /// Evaluates its first argument before returning the second.
+    /// </summary>
+    public static B Seq<A, B>(A a, B b)
+    {
+        _ = a;
+        return b;
+    }
 
     public static IO<A> ReturnIO<A>(A x) =>
         new IO<A>(s => (s, x));

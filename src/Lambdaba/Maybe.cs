@@ -86,13 +86,30 @@ public record Maybe :
     /// <param name="b"></param>
     /// <returns></returns>
     /// <exception cref="NotImplementedException"></exception>
-    public static Data<Maybe, A> Or<A>(Data<Maybe, A> a, Data<Maybe, A> b) => 
+    public static Data<Maybe, A> Or<A>(Data<Maybe, A> a, Data<Maybe, A> b) =>
         a switch
         {
             Nothing<A> _ => b,
             Just<A> => a,
             _ => throw new NotImplementedException()
         };
+
+    /// <summary>
+    /// Case analysis for the Maybe type.
+    /// </summary>
+    public static B Maybe<B, A>(B @default, Func<A, B> f, Data<Maybe, A> m) =>
+        m switch
+        {
+            Nothing<A> _ => @default,
+            Just<A>(var a) => f(a),
+            _ => throw new NotSupportedException()
+        };
+
+    /// <summary>
+    /// Extracts the element out of a Just and returns a default value otherwise.
+    /// </summary>
+    public static A FromMaybe<A>(A @default, Data<Maybe, A> m) =>
+        Maybe(@default, Id<A>(), m);
 
     internal static Maybe<A> Just<A>(A a)
      => new Just<A>(a);

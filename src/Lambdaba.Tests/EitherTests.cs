@@ -1,5 +1,6 @@
 namespace Lambdaba.Tests;
 
+using Lambdaba;
 using static Lambdaba.Base;
 
 public class EitherTests
@@ -71,6 +72,14 @@ public class EitherTests
         Data<Either<string>, int> right = new Right<string, int>(1);
         var swapped = Either<string>.Swap(right);
         Xunit.Assert.Equal(new Left<int, string>(1), swapped);
+    }
+
+    [Fact]
+    public void Either_Function_Works()
+    {
+        Data<Either<string>, int> val = new Right<string, int>(2);
+        var res = Either<string>.Either(s => s.Length, x => x + 1, val);
+        Assert.Equal(3, res);
     }
 
     [Fact]
