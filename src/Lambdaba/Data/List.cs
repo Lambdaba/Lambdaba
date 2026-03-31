@@ -13,11 +13,11 @@ public static class List
         {
             if (item != null && item.Equals(a))
             {
-                return Maybe.Just(index);
+                return Maybe.MkJust(index);
             }
             index++;
         }
-        return Maybe.Nothing<Int>();
+        return Maybe.MkNothing<Int>();
     }
 
     public static Int Length<A>(Types.List<A> list)
@@ -47,8 +47,8 @@ public static class List
     public static Maybe<A> ListToMaybe<A>(Types.List<A> list) =>
         list switch
         {
-            [] => Maybe.Nothing<A>(),
-            [var x, .. var _] => Maybe.Just(x),
+            [] => Maybe.MkNothing<A>(),
+            [var x, .. var _] => Maybe.MkJust(x),
             _ => throw new NotSupportedException()
         };
 
