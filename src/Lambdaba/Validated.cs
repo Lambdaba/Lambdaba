@@ -51,12 +51,11 @@ public class Validated<A> :
     Data<Validated, A>,
     IUnion
 {
-    private readonly object? _value;
+    public Validated(Valid<A> value) { Value = value; }
+    public Validated(Invalid value) { Value = value; }
 
-    public Validated(Valid<A> value) { _value = value; }
-    public Validated(Invalid value) { _value = value; }
-
-    public object? Value => _value;
+    /// <summary>The wrapped discriminated-union case; accessed by the <c>[Union]</c> switch rewrite.</summary>
+    public object? Value { get => field; private set; }
 
     public static implicit operator Validated<A>(Valid<A> value) => new(value);
     public static implicit operator Validated<A>(Invalid value) => new(value);

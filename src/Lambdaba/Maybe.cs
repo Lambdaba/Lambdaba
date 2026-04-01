@@ -103,12 +103,11 @@ public class Maybe<A> :
     Data<Maybe, A>,
     IUnion
 {
-    private readonly object? _value;
+    public Maybe(Just<A> value) { Value = value; }
+    public Maybe(Nothing value) { Value = value; }
 
-    public Maybe(Just<A> value) { _value = value; }
-    public Maybe(Nothing value) { _value = value; }
-
-    public object? Value => _value;
+    /// <summary>The wrapped discriminated-union case; accessed by the <c>[Union]</c> switch rewrite.</summary>
+    public object? Value { get => field; private set; }
 
     public static implicit operator Maybe<A>(Just<A> value) => new(value);
     public static implicit operator Maybe<A>(Nothing value) => new(value);
@@ -124,12 +123,11 @@ public class MaybeMonoid<A> :
     Monoid<MaybeMonoid<A>> 
     where A : Semigroup<A>
 {
-    private readonly object? _value;
+    public MaybeMonoid(JustMonoid<A> value) { Value = value; }
+    public MaybeMonoid(NothingMonoid<A> value) { Value = value; }
 
-    public MaybeMonoid(JustMonoid<A> value) { _value = value; }
-    public MaybeMonoid(NothingMonoid<A> value) { _value = value; }
-
-    public object? Value => _value;
+    /// <summary>The wrapped discriminated-union case; accessed by the <c>[Union]</c> switch rewrite.</summary>
+    public object? Value { get => field; private set; }
 
     public static implicit operator MaybeMonoid<A>(JustMonoid<A> value) => new(value);
     public static implicit operator MaybeMonoid<A>(NothingMonoid<A> value) => new(value);
