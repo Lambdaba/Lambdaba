@@ -59,7 +59,7 @@ public class Validated<A> :
     public object? Value => _value;
 
     public static implicit operator Validated<A>(Valid<A> value) => new(value);
-    public static implicit operator Validated<A>(Invalid value) => new Invalid();
+    public static implicit operator Validated<A>(Invalid value) => new(value);
 }
 
 /// <summary>

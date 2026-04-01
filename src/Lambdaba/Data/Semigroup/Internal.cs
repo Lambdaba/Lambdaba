@@ -14,8 +14,8 @@ public static class Internal
             return _function(value);
         }
 
-        public static Endo<A> Combine(Endo<A> a, Endo<A> b) => throw new NotImplementedException();
-        public static Endo<A> Mempty() => throw new NotImplementedException();
+        public static Endo<A> Combine(Endo<A> a, Endo<A> b) => a * b;
+        public static Endo<A> Mempty() => new Endo<A>(x => x);
 
         public static implicit operator Endo<A>(Func<A, A> function)
         {

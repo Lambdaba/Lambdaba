@@ -13,7 +13,7 @@ public static class Prelude
     /// to override at least 1 of the operators, otherwise it will recurse infinitely
     /// </summary>
     /// <typeparam name="A"></typeparam>
-    public interface Eq<in A>
+    public interface Eq<A>
         where A : Eq<A>
     {
         static virtual bool operator ==(A x, A y) => Not(x != y);

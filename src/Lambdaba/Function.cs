@@ -10,7 +10,7 @@ public static class FunctionExtensions
     /// Uncurries a function with two arguments.
     /// </summary>
     public static Data<Function, (A, B), C> Uncurry<A, B, C>(this Data<Function, A, Func<B, C>> func) =>
-        new Function<(A, B), C>(tuple => ((Function<B, C>)func).Func(tuple.Item2));
+        new Function<(A, B), C>(tuple => ((Function<A, Func<B, C>>)func).Func(tuple.Item1)(tuple.Item2));
 
     public static Data<Function, A, Func<B, C>> Curry<A, B, C>(this Data<Function, (A, B), C> func) =>
         new Function<A, Func<B, C>>(a => new Function<B, C>(b => ((Function<(A, B), C>)func).Func((a, b))).Func);
@@ -160,19 +160,9 @@ public sealed record FunctionMonoid<A, B> :
             new(x => B.Combine(a.Func(x), b.Func(x)));
     public static FunctionMonoid<A, B> Mempty() => new FunctionMonoid<A, B>(_ => B.Mempty());
 
-    public static FunctionMonoid<A, B> STimes<C>(C y0, FunctionMonoid<A, B> x0)
-            where C : Integral<C> 
-            {
-                var y = y0;
-                var x = x0;
-                var result = Mempty();
-                while (y > y0)
-                {
-                    result = Combine(result, x);
-                    y -= y0;
-                }
-                return result;
-            }  
+    public static FunctionMonoid<A, B> STimes<C>(C n, FunctionMonoid<A, B> x)
+            where C : Integral<C>
+            => new(a => B.STimes(n, x.Func(a)));
 }
 
 public sealed record FunctionMonoid<A, B, C> : 
@@ -190,19 +180,9 @@ public sealed record FunctionMonoid<A, B, C> :
 
     public static FunctionMonoid<A, B, C> Mempty() => new FunctionMonoid<A, B, C>((x, y) => C.Mempty());
 
-    public static FunctionMonoid<A, B, C> STimes<D>(D y0, FunctionMonoid<A, B, C> x0)
+    public static FunctionMonoid<A, B, C> STimes<D>(D n, FunctionMonoid<A, B, C> x)
         where D : Integral<D>
-    {
-        var y = y0;
-        var x = x0;
-        var result = Mempty();
-        while (y > y0)
-        {
-            result = Combine(result, x);
-            y -= y0;
-        }
-        return result;
-    }
+        => new((a, b) => C.STimes(n, x.Func(a, b)));
 }
 
 public sealed record FunctionMonoid<A, B, C, D> : 
@@ -220,19 +200,9 @@ public sealed record FunctionMonoid<A, B, C, D> :
 
     public static FunctionMonoid<A, B, C, D> Mempty() => new FunctionMonoid<A, B, C, D>((x, y, z) => D.Mempty());
 
-    public static FunctionMonoid<A, B, C, D> STimes<E>(E y0, FunctionMonoid<A, B, C, D> x0)
+    public static FunctionMonoid<A, B, C, D> STimes<E>(E n, FunctionMonoid<A, B, C, D> x)
         where E : Integral<E>
-    {
-        var y = y0;
-        var x = x0;
-        var result = Mempty();
-        while (y > y0)
-        {
-            result = Combine(result, x);
-            y -= y0;
-        }
-        return result;
-    }
+        => new((a, b, c) => D.STimes(n, x.Func(a, b, c)));
 }
 
 public sealed record FunctionMonoid<A, B, C, D, E> : 
@@ -250,19 +220,9 @@ public sealed record FunctionMonoid<A, B, C, D, E> :
 
     public static FunctionMonoid<A, B, C, D, E> Mempty() => new FunctionMonoid<A, B, C, D, E>((w, x, y, z) => E.Mempty());
 
-    public static FunctionMonoid<A, B, C, D, E> STimes<F>(F y0, FunctionMonoid<A, B, C, D, E> x0)
+    public static FunctionMonoid<A, B, C, D, E> STimes<F>(F n, FunctionMonoid<A, B, C, D, E> x)
         where F : Integral<F>
-    {
-        var y = y0;
-        var x = x0;
-        var result = Mempty();
-        while (y > y0)
-        {
-            result = Combine(result, x);
-            y -= y0;
-        }
-        return result;
-    }
+        => new((w, x2, y, z) => E.STimes(n, x.Func(w, x2, y, z)));
 }
 
 // Using the | operator to chain function calls

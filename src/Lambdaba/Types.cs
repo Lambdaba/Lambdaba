@@ -60,6 +60,7 @@ public static class Types
         Monoid<List<A>>,
         Show<List<A>> 
     {
+        /// <summary>O(n) — traverses the linked list via LINQ.</summary>
         public int Count => this.Count();
 
         public List<A> Slice(int start, int length)
