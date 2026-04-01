@@ -6,27 +6,35 @@ namespace Lambdaba;
 
 public static class DataExtensions
 {
-    public static Data<T, B> Select<T, A, B>(this Data<T, A> t, Func<A, B> f)
-        where T : Functor<T> => T.FMap(f, t);
+    extension<T, A, B>(Data<T, A> t) where T : Functor<T>
+    {
+        public Data<T, B> Select(Func<A, B> f) => T.FMap(f, t);
+    }
 
-    public static Data<T, C> SelectMany<T, A, B, C>(this Data<T, A> t, Func<A, Data<T, B>> f, Func<A, B, C> project)
-        where T : Monad<T> => T.SelectMany(t, f, project);
+    extension<T, A, B, C>(Data<T, A> t) where T : Monad<T>
+    {
+        public Data<T, C> SelectMany(Func<A, Data<T, B>> f, Func<A, B, C> project) =>
+            T.SelectMany(t, f, project);
+    }
 
-    public static Data<M, B> Bind<M, A, B>(this Data<M, A> a, Func<A, Data<M, B>> f)
-        where M : Monad<M> =>
-            M.Bind(a, f);
-    
-    public static A MConcat<F, A>(this A a, Data<F, A> @as) 
-            where F : Foldable<F>
-            where A : Monoid<A> =>
-                A.MConcat(@as);
-                
-    public static A MAppend<A>(this A a, A b) 
-        where A : Monoid<A> =>
-            A.Mappend(a, b);
+    extension<M, A, B>(Data<M, A> a) where M : Monad<M>
+    {
+        public Data<M, B> Bind(Func<A, Data<M, B>> f) => M.Bind(a, f);
+    }
 
-    // implement where
-    public static Data<T, A> Where<T, A>(this Data<T, A> t, Func<A, bool> predicate)
-        where T : Monad<T>, Alternative<T> =>
-            t.Where(predicate);
+    extension<F, A>(A a) where F : Foldable<F> where A : Monoid<A>
+    {
+        public A MConcat(Data<F, A> @as) => A.MConcat(@as);
+    }
+
+    extension<A>(A a) where A : Monoid<A>
+    {
+        public A MAppend(A b) => A.Mappend(a, b);
+    }
+
+    extension<T, A>(Data<T, A> t) where T : Monad<T>, Alternative<T>
+    {
+        public Data<T, A> Where(Func<A, bool> predicate) =>
+            T.Bind(t, a => predicate(a) ? T.Pure<A>(a) : T.Empty<A>());
+    }
 }
