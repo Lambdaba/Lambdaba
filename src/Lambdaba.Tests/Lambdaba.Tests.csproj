@@ -19,9 +19,5 @@
     <ProjectReference Include="..\Lambdaba\Lambdaba.csproj" />
   </ItemGroup>
 
-  <!-- Step 9 restores this file once Either case record arities are updated in EitherTests.cs -->
-  <ItemGroup>
-    <Compile Remove="EitherTests.cs" />
-  </ItemGroup>
 
 </Project>
