@@ -39,7 +39,12 @@ public sealed class UnionGenerator : IIncrementalGenerator
 
     private sealed record CaseModel(string FullyQualifiedType, string SimpleName);
 
-    private sealed record BrandInfo(string FullyQualifiedTypeName, string SimpleName, string Namespace, string DataInterfaceFqn);
+    private sealed record BrandInfo(
+        string FullyQualifiedTypeName,
+        string SimpleName,
+        string Namespace,
+        string DataInterfaceFqn,
+        ImmutableArray<string> BrandTyParamNames);
 
     private sealed record UnionModel(
         string Namespace,
@@ -179,11 +184,16 @@ public sealed class UnionGenerator : IIncrementalGenerator
                     ? string.Empty
                     : baseType.ContainingNamespace.ToDisplayString();
 
+                var brandTyParamNames = baseType.TypeParameters
+                    .Select(tp => tp.Name)
+                    .ToImmutableArray();
+
                 return new BrandInfo(
                     FullyQualifiedTypeName: baseType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     SimpleName: baseType.Name,
                     Namespace: brandNs,
-                    DataInterfaceFqn: dataIfaceFqn);
+                    DataInterfaceFqn: dataIfaceFqn,
+                    BrandTyParamNames: brandTyParamNames);
             }
 
             baseType = baseType.BaseType;
@@ -329,15 +339,19 @@ public sealed class UnionGenerator : IIncrementalGenerator
             return;
         }
 
-        // Func<Case1, R> onCase1, Func<Case2, R> onCase2, ...
+        // Use TResult as return type param to avoid shadowing any class-level type parameter
+        // that the union type itself may already declare (e.g. Either<L, R> has "R" at class level).
+        const string returnTyParam = "TResult";
+
+        // Func<Case1, TResult> onCase1, Func<Case2, TResult> onCase2, ...
         var paramList = string.Join(", ", m.Cases.Select(c =>
-            $"global::System.Func<{c.FullyQualifiedType}, R> on{c.SimpleName}"));
+            $"global::System.Func<{c.FullyQualifiedType}, {returnTyParam}> on{c.SimpleName}"));
 
         // Case1 v0 => onCase1(v0), ...
         var switchArms = string.Join("\n            ", m.Cases.Select((c, i) =>
             $"{c.FullyQualifiedType} v_{i} => on{c.SimpleName}(v_{i}),"));
 
-        sb.AppendLine($"    public R Match<R>({paramList}) =>");
+        sb.AppendLine($"    public {returnTyParam} Match<{returnTyParam}>({paramList}) =>");
         sb.AppendLine($"        Value switch");
         sb.AppendLine($"        {{");
         sb.AppendLine($"            {switchArms}");
@@ -425,30 +439,44 @@ public sealed class UnionGenerator : IIncrementalGenerator
             sb.AppendLine();
         }
 
-        // The brand helper is generic over A and R. The union type takes all type params from m.TyParams.
-        // For a Maybe<A> (one type param), the brand Match is Match<A, R>(Data<Maybe, A>, ...)
-        // We need to know which type parameter is the "value" type for Data<Brand, A>.
-        // Convention: the union's single type parameter (or last one) maps to the HKT A slot.
-        // For Maybe<A> with TyParams = [A], this is "A".
+        // The brand helper is generic over (brand type params) + A + R.
+        // Convention: the union's last type parameter is the HKT value slot (A).
+        // For Maybe<A>  (1 param, brand Maybe     has 0 brand params): Match<A, R>(Data<Maybe, A>, ...)
+        // For Either<L,R> (2 params, brand Either<L> has 1 brand param L): Match<L, A, R>(Data<Either<L>, A>, ...)
         var aTyParam = m.TyParams.Length > 0 ? m.TyParams[m.TyParams.Length - 1].Name : "A";
 
+        // Brand type params (e.g. "L" for Either<L>) are class-level on the brand partial class.
+        // They must NOT be re-declared as method-level type params — they are already in scope.
+        var brandTyParams = brand.BrandTyParamNames;
+
+        // All union type params in order (e.g. "L, R" for Either<L, R>).
+        var allUnionTyParams = string.Join(", ", m.TyParams.Select(tp => tp.Name));
+
+        // Brand class rendered with its own type params (e.g. "Either<L>").
+        var brandWithTyParams = brandTyParams.IsEmpty
+            ? brand.SimpleName
+            : $"{brand.SimpleName}<{string.Join(", ", brandTyParams)}>";
+
+        // Use TResult as return type to avoid collision with union type param names (e.g. Either<L, R>
+        // already uses "R" as a type param, so we cannot also use "R" as the return type variable).
+        const string returnTyParam = "TResult";
+
         var paramList = string.Join(", ", m.Cases.Select(c =>
-        {
-            // For generic case types like Just<A>, we need to use A (the type parameter name)
-            // not the fully qualified type which would reference the concrete symbol.
-            // We render the case type with the type parameter substituted.
-            var caseType = RenderCaseTypeWithTyParam(c.FullyQualifiedType, m, aTyParam);
-            return $"global::System.Func<{caseType}, R> on{c.SimpleName}";
-        }));
+            $"global::System.Func<{c.FullyQualifiedType}, {returnTyParam}> on{c.SimpleName}"));
 
         var unionTypeName = m.TypeName;
         var castArgs = string.Join(", ", m.Cases.Select(c => $"on{c.SimpleName}"));
 
-        sb.AppendLine($"partial class {brand.SimpleName}");
+        // The cast target uses all union type params, e.g. "Either<L, R>" for Either<L, R>.
+        var castTarget = $"{m.Namespace}.{unionTypeName}<{allUnionTyParams}>";
+
+        // The partial class declaration mirrors the brand class type params (e.g. "Either<L>").
+        // Method-level type params are only: the value slot (aTyParam) and the return type (TResult).
+        sb.AppendLine($"partial class {brandWithTyParams}");
         sb.AppendLine("{");
-        sb.AppendLine($"    public static R Match<{aTyParam}, R>({brand.DataInterfaceFqn}<{brand.SimpleName}, {aTyParam}> data,");
+        sb.AppendLine($"    public static {returnTyParam} Match<{aTyParam}, {returnTyParam}>({brand.DataInterfaceFqn}<{brandWithTyParams}, {aTyParam}> data,");
         sb.AppendLine($"        {paramList}) =>");
-        sb.AppendLine($"        (({m.Namespace}.{unionTypeName}<{aTyParam}>)data).Match({castArgs});");
+        sb.AppendLine($"        (({castTarget})data).Match({castArgs});");
         sb.AppendLine("}");
 
         var hintName = BuildHintName(brand.FullyQualifiedTypeName) + ".Brand.g.cs";

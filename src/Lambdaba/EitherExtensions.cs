@@ -11,54 +11,25 @@ public static class EitherExtensions
 {
     extension<L, R>(Either<L, R> e)
     {
-        /// <summary>Returns <c>true</c> if the value is <see cref="Left{L,R}"/>.</summary>
-        public bool IsLeft => e switch
-        {
-            Left<L, R> => true,
-            _ => false
-        };
-
-        /// <summary>Returns <c>true</c> if the value is <see cref="Right{L,R}"/>.</summary>
-        public bool IsRight => e switch
-        {
-            Right<L, R> => true,
-            _ => false
-        };
+        /// <summary>
+        /// Extracts the <see cref="Left{L}"/> value.
+        /// Throws <see cref="InvalidOperationException"/> if <see cref="Right{R}"/>.
+        /// </summary>
+        public L FromLeft => e.TryGetValue(out Left<L>? l)
+            ? l!.Value
+            : throw new InvalidOperationException("Either.FromLeft: Right");
 
         /// <summary>
-        /// Extracts the <see cref="Left{L,R}"/> value.
-        /// Throws <see cref="InvalidOperationException"/> if <see cref="Right{L,R}"/>.
+        /// Extracts the <see cref="Right{R}"/> value.
+        /// Throws <see cref="InvalidOperationException"/> if <see cref="Left{L}"/>.
         /// </summary>
-        public L FromLeft => e switch
-        {
-            Left<L, R>(var l) => l,
-            _ => throw new InvalidOperationException("Either.FromLeft: Right")
-        };
-
-        /// <summary>
-        /// Extracts the <see cref="Right{L,R}"/> value.
-        /// Throws <see cref="InvalidOperationException"/> if <see cref="Left{L,R}"/>.
-        /// </summary>
-        public R FromRight => e switch
-        {
-            Right<L, R>(var r) => r,
-            _ => throw new InvalidOperationException("Either.FromRight: Left")
-        };
-
-        /// <summary>
-        /// Case analysis: apply <paramref name="onLeft"/> or <paramref name="onRight"/> depending on the variant.
-        /// Equivalent to Haskell's <c>either f g e</c>.
-        /// </summary>
-        public T Match<T>(Func<L, T> onLeft, Func<R, T> onRight) => e switch
-        {
-            Left<L, R>(var l) => onLeft(l),
-            Right<L, R>(var r) => onRight(r),
-            _ => throw new NotSupportedException()
-        };
+        public R FromRight => e.TryGetValue(out Right<R>? r)
+            ? r!.Value
+            : throw new InvalidOperationException("Either.FromRight: Left");
     }
 
     /// <summary>
-    /// Extracts all <see cref="Left{L,R}"/> values from a list.
+    /// Extracts all <see cref="Left{L}"/> values from a list.
     /// Equivalent to Haskell's <c>lefts</c>.
     /// </summary>
     extension<L, R>(List<Either<L, R>> xs)
@@ -66,21 +37,19 @@ public static class EitherExtensions
         public List<L> Lefts => xs switch
         {
             [] => [],
-            [Left<L, R>(var l), .. var rest] => [l, .. rest.Lefts],
-            [Right<L, R>, .. var rest] => rest.Lefts,
-            _ => throw new NotSupportedException()
+            [var head, .. var rest] when head.TryGetValue(out Left<L>? l) => [l!.Value, .. rest.Lefts],
+            [_, .. var rest] => rest.Lefts,
         };
 
         /// <summary>
-        /// Extracts all <see cref="Right{L,R}"/> values from a list.
+        /// Extracts all <see cref="Right{R}"/> values from a list.
         /// Equivalent to Haskell's <c>rights</c>.
         /// </summary>
         public List<R> Rights => xs switch
         {
             [] => [],
-            [Right<L, R>(var r), .. var rest] => [r, .. rest.Rights],
-            [Left<L, R>, .. var rest] => rest.Rights,
-            _ => throw new NotSupportedException()
+            [var head, .. var rest] when head.TryGetValue(out Right<R>? r) => [r!.Value, .. rest.Rights],
+            [_, .. var rest] => rest.Rights,
         };
 
         /// <summary>
@@ -95,10 +64,10 @@ public static class EitherExtensions
                 List<R> rights = [];
                 foreach (var item in xs)
                 {
-                    if (item is Left<L, R>(var l))
-                        lefts = [.. lefts, l];
-                    else if (item is Right<L, R>(var r))
-                        rights = [.. rights, r];
+                    if (item.TryGetValue(out Left<L>? l))
+                        lefts = [.. lefts, l!.Value];
+                    else if (item.TryGetValue(out Right<R>? r))
+                        rights = [.. rights, r!.Value];
                 }
                 return (lefts, rights);
             }

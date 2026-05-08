@@ -9,14 +9,8 @@ namespace Lambdaba;
 /// </summary>
 public static class MaybeExtensions
 {
-    /// <summary>Returns <c>true</c> if the value is <see cref="Just{A}"/>.</summary>
     extension<A>(Maybe<A> m)
     {
-        public bool IsJust => m switch { Just<A> => true, _ => false };
-
-        /// <summary>Returns <c>true</c> if the value is <see cref="Nothing"/>.</summary>
-        public bool IsNothing => m switch { Nothing => true, _ => false };
-
         /// <summary>
         /// Extracts the value from <see cref="Just{A}"/>.
         /// Throws <see cref="InvalidOperationException"/> if <see cref="Nothing"/>.
@@ -47,9 +41,10 @@ public static class MaybeExtensions
         /// <summary>
         /// Applies <paramref name="f"/> to the contained value and returns the result,
         /// or returns <paramref name="defaultValue"/> for <see cref="Nothing"/>.
-        /// Equivalent to Haskell's <c>maybe def f m</c>.
+        /// Equivalent to Haskell's <c>maybe def f m</c>. Renamed from <c>Match</c> to
+        /// <c>Fold</c> to disambiguate from the generator-emitted case-tagged <c>Match</c>.
         /// </summary>
-        public B Match<B>(B defaultValue, Func<A, B> f) => m switch
+        public B Fold<B>(B defaultValue, Func<A, B> f) => m switch
         {
             Just<A>(var x) => f(x),
             _ => defaultValue
