@@ -24,8 +24,8 @@ C# 15 ships with native discriminated-union support: a `[System.Runtime.Compiler
 
 Today the codebase uses the `[Union]` attribute on three HKT-bearing types but hand-rolls the basic union pattern at every site:
 
-- `src/Lambdaba/Maybe.cs:101` — `[Union] public class Maybe<A>` declares two single-parameter ctors at lines 106–107, the `Value` property at lines 109–110, and the implicit conversion operators at lines 112–113. None of these need to be hand-rolled — the generator will emit them.
-- `src/Lambdaba/Maybe.cs:121` — `[Union] public class MaybeMonoid<A>` repeats the same boilerplate (lines 126–130, 132–133).
+- `src/Lambdaba/Maybe.cs:101` — `[Union] public class Maybe<A>` declares two single-parameter ctors at lines 106–107, the `Value` property at lines 109–110, and the implicit conversion operators at lines 112–113. These remain hand-rolled: the generator augments each `[Union] partial class` with `Match` / `HasValue` / `Is<Case>` / `TryGetValue` members and (for HKT brands) a brand-side `Match<A, TResult>` helper, but does not emit constructors, `Value`, or implicit operators. Retaining the hand-rolled body was necessary because (a) implicit-operator emission for arbitrary case types is not yet reliable on net11 preview-2, and (b) the brand-side helper requires `Value` to be accessible at compile time.
+- `src/Lambdaba/Maybe.cs:121` — `[Union] public class MaybeMonoid<A>` repeats the same hand-rolled body (lines 126–130, 132–133).
 - `src/Lambdaba/Validated.cs:49` — `[Union] public class Validated<A>` does the same (lines 54–58, 60–61).
 
 `Either<L, R>` does **not** use the `[Union]` attribute today. It is shaped as `abstract record Either<L>` (`src/Lambdaba/Either.cs:10`) plus `abstract record Either<L,R> : Either<L>, Data<Either<L>, R>` (`src/Lambdaba/Either.cs:141`), with `sealed record Left<L,R>(L Value)` and `sealed record Right<L,R>(R Value)` cases. Every brand method on `Either<L>` uses the pattern `t switch { Left<L,A>(var l) => …, Right<L,A>(var r) => …, _ => throw new NotSupportedException() }` — nine such trailing `_ =>` arms exist (lines 19, 27, 38, 40, 51, 59, 67, 75, 83, 91, 99 in `Either.cs`). They are unreachable today and would be eliminated by union-driven exhaustiveness.
@@ -91,11 +91,11 @@ Before emitting each generated member, the generator scans `INamedTypeSymbol.Get
 
 ### Positive
 
-- **Boilerplate elimination.** Every `[Union] partial class` loses ~6–10 lines of hand-rolled ctors, `Value`, and implicit operators. The generator emits them once, correctly, with the same shape every time.
+- **Generated dispatch surface.** Every `[Union] partial class` gains `Match` / `HasValue` / `Is<Case>` / `TryGetValue` members from the generator without hand-rolling them. Constructors, `Value`, and implicit operators are still hand-rolled per case (see Context); the generator does not emit those on net11 preview-2.
 - **Exhaustiveness from the compiler.** The nine `_ => throw new NotSupportedException()` arms in `Either<L>` (lines 19, 27, 38, 40, 51, 59, 67, 75, 83, 91, 99) all disappear. The C# 15 exhaustiveness rule covers them; the dead-arm cleanup is mechanical.
-- **One-call brand methods.** `Maybe.FMap`, `Maybe.Apply`, `Maybe.Bind`, `Validated.Apply`, `Either.FMap`, etc. become single-`Match` expressions instead of a switch over `((Maybe<A>)data) switch { … }`. The redundant cast-and-switch dance dies.
+- **Brand-side `Match` helper available.** The generator emits a brand-side `Match<A, TResult>(Data<F, A> data, …)` helper that brand methods *may* use to subsume the cast-and-switch pattern. PR #2 retains the existing `((F<A>)data) switch { … }` sites in `Maybe`, `Validated`, and `Either<L>` brand methods — adopting the helper is a follow-up Boy-Scout opportunity.
 - **Cleaner `Either` shape.** Dropping the carrier type parameter from the cases (`Left<L,R>` → `Left<L>`) saves one type-argument per case site. Roughly 40 call sites across `Either.cs`, `EitherExtensions.cs`, and `EitherTests.cs` lose visual noise.
-- **A reusable generator surface.** Future HKT-bearing unions only need the `[Union] partial class` declaration and case records. No extra hand-rolling.
+- **A reusable generator surface.** Future HKT-bearing unions still need: the `[Union] partial class` declaration, hand-rolled constructors per case, the `Value` property, and implicit operators per case. The generator augments with `Match` / `HasValue` / `Is<Case>` / `TryGetValue` and (when an HKT brand is detected) the brand-side `Match<A, TResult>` helper.
 - **Native primitive `Union<T1..T8>`** become available in the root namespace for ad-hoc product-of-sum scenarios where defining a named brand is overkill.
 
 ### Negative

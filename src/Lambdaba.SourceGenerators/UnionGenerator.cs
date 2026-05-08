@@ -485,25 +485,6 @@ public sealed class UnionGenerator : IIncrementalGenerator
 
     // ------------------------------------------------------------------ helpers
 
-    private static string RenderCaseTypeWithTyParam(
-        string fullyQualifiedCaseType,
-        UnionModel m,
-        string aTyParam)
-    {
-        // If the case type is generic (e.g. global::Lambdaba.Just<global::Lambdaba.Maybe.A>),
-        // we need the simple form with the actual type parameter name.
-        // Strategy: if the case type ends with ">", replace the inner type-arg with aTyParam.
-        // We do this by checking if the case type contains a "<" — if so, take the base name and add <A>.
-        // The fully qualified type for Just<A> is something like "global::Lambdaba.Just<A>".
-        // We strip the global:: prefix for namespace resolution and keep the structure.
-        // Simpler: check if the original case model has a generic arity.
-        // fullyQualifiedCaseType for Just<A> during analysis is the bound type symbol display.
-        // In the analysis context the type arg "A" is actually a type parameter symbol named "A".
-        // Roslyn displays it as e.g. "global::Lambdaba.Just<A>" where "A" is the tp name.
-        // So the display string already uses the parameter name. We can use it directly.
-        return fullyQualifiedCaseType;
-    }
-
     private static bool MemberAlreadyExists(UnionModel m, string memberName)
         => m.ExistingMembers.Contains(memberName);
 
