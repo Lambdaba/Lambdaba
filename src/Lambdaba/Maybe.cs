@@ -7,11 +7,11 @@ namespace Lambdaba;
 /// <summary>
 /// The Maybe type constructor (brand type for HKTs).
 /// </summary>
-public class Maybe :
+public partial class Maybe :
     Data<Maybe>,
     Monad<Maybe>,
     Alternative<Maybe>,
-    MonadPlus<Maybe>    
+    MonadPlus<Maybe>
 {
     /// <summary>
     /// Applies a function wrapped in a <see cref="Data{Maybe, Func{A, B}}"/> to a value wrapped in a <see cref="Data{Maybe, A}"/>.
@@ -98,7 +98,7 @@ public class Maybe :
 /// </summary>
 /// <typeparam name="A">The contained value type.</typeparam>
 [Union]
-public class Maybe<A> :
+public partial class Maybe<A> :
     Maybe,
     Data<Maybe, A>,
     IUnion
@@ -118,7 +118,7 @@ public class Maybe<A> :
 /// </summary>
 /// <typeparam name="A"></typeparam>
 [Union]
-public class MaybeMonoid<A> :
+public partial class MaybeMonoid<A> :
     IUnion,
     Monoid<MaybeMonoid<A>> 
     where A : Semigroup<A>

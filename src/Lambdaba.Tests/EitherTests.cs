@@ -8,31 +8,42 @@ public class EitherTests
     [Test]
     public async Task Bind_Right_PropagatesValue()
     {
-        Data<Either<string>, int> e = new Right<string, int>(1);
-        var result = Either<string>.Bind(e, x => new Right<string, int>(x + 1));
-        await Assert.That(result).IsEqualTo(new Right<string, int>(2));
+        Either<string, int> e = new Right<int>(1);
+        var result = (Either<string, int>)Either<string>.Bind(e, x => (Data<Either<string>, int>)new Either<string, int>(new Right<int>(x + 1)));
+
+        result.TryGetValue(out Right<int>? r);
+        await Assert.That(r).IsNotNull();
+        await Assert.That(r!.Value).IsEqualTo(2);
     }
 
     [Test]
     public async Task Bind_Left_StaysLeft()
     {
-        Data<Either<string>, int> e = new Left<string, int>("err");
-        var result = Either<string>.Bind(e, x => new Right<string, int>(x + 1));
-        await Assert.That(result).IsEqualTo(new Left<string, int>("err"));
+        Either<string, int> e = new Left<string>("err");
+        var result = (Either<string, int>)Either<string>.Bind(e, x => (Data<Either<string>, int>)new Either<string, int>(new Right<int>(x + 1)));
+
+        result.TryGetValue(out Left<string>? l);
+        await Assert.That(l).IsNotNull();
+        await Assert.That(l!.Value).IsEqualTo("err");
     }
 
     [Test]
     public async Task SelectMany_ProjectsResult()
     {
-        Data<Either<string>, int> e = new Right<string, int>(1);
-        var result = Either<string>.SelectMany(e, x => new Right<string, int>(x + 1), (a, b) => a + b);
-        await Assert.That(result).IsEqualTo(new Right<string, int>(3));
+        Either<string, int> e = new Right<int>(1);
+        var result = (Either<string, int>)Either<string>.SelectMany(e,
+            x => (Data<Either<string>, int>)new Either<string, int>(new Right<int>(x + 1)),
+            (a, b) => a + b);
+
+        result.TryGetValue(out Right<int>? r);
+        await Assert.That(r).IsNotNull();
+        await Assert.That(r!.Value).IsEqualTo(3);
     }
 
     [Test]
     public async Task Match_PicksCorrectBranch()
     {
-        Data<Either<string>, int> e = new Right<string, int>(2);
+        Either<string, int> e = new Right<int>(2);
         var result = Either<string>.Match(e, l => l.Length, r => r * 2);
         await Assert.That(result).IsEqualTo(4);
     }
@@ -40,8 +51,8 @@ public class EitherTests
     [Test]
     public async Task IsLeft_IsRight_Work()
     {
-        Data<Either<string>, int> left = new Left<string, int>("err");
-        Data<Either<string>, int> right = new Right<string, int>(1);
+        Either<string, int> left = new Left<string>("err");
+        Either<string, int> right = new Right<int>(1);
 
         await Assert.That(Either<string>.IsLeft(left)).IsEqualTo(new True());
         await Assert.That(Either<string>.IsRight(left)).IsEqualTo(new False());
@@ -53,31 +64,45 @@ public class EitherTests
     [Test]
     public async Task MapLeft_TransformsLeftValue()
     {
-        Data<Either<string>, int> left = new Left<string, int>("err");
-        var result = Either<string>.MapLeft<int, int>(s => s.Length, left);
-        await Assert.That(result).IsEqualTo(new Left<int, int>(3));
+        Either<string, int> left = new Left<string>("err");
+        var result = (Either<int, int>)Either<string>.MapLeft<int, int>(s => s.Length, left);
+
+        result.TryGetValue(out Left<int>? l);
+        await Assert.That(l).IsNotNull();
+        await Assert.That(l!.Value).IsEqualTo(3);
     }
 
     [Test]
     public async Task Bimap_TransformsBothSides()
     {
-        Data<Either<string>, int> right = new Right<string, int>(1);
-        var result = Either<string>.Bimap<int, int, int>(s => s.Length, x => x + 1, right);
-        await Assert.That(result).IsEqualTo(new Right<int, int>(2));
+        Either<string, int> right = new Right<int>(1);
+        var result = (Either<int, int>)Either<string>.Bimap<int, int, int>(s => s.Length, x => x + 1, right);
+
+        result.TryGetValue(out Right<int>? r);
+        await Assert.That(r).IsNotNull();
+        await Assert.That(r!.Value).IsEqualTo(2);
     }
 
     [Test]
     public async Task Swap_FlipsConstructors()
     {
-        Data<Either<string>, int> right = new Right<string, int>(1);
-        var swapped = Either<string>.Swap(right);
-        await Assert.That(swapped).IsEqualTo(new Left<int, string>(1));
+        Either<string, int> right = new Right<int>(1);
+        var swapped = (Either<int, string>)Either<string>.Swap(right);
+
+        swapped.TryGetValue(out Left<int>? l);
+        await Assert.That(l).IsNotNull();
+        await Assert.That(l!.Value).IsEqualTo(1);
     }
 
     [Test]
     public async Task Lefts_Rights_Partition_Work()
     {
-        Types.List<Either<string, int>> xs = [new Left<string, int>("a"), new Right<string, int>(1), new Left<string, int>("b")];
+        Types.List<Either<string, int>> xs =
+        [
+            new Either<string, int>(new Left<string>("a")),
+            new Either<string, int>(new Right<int>(1)),
+            new Either<string, int>(new Left<string>("b")),
+        ];
         var lefts = Either<string>.Lefts(xs);
         var rights = Either<string>.Rights(xs);
         var (partLefts, partRights) = Either<string>.Partition(xs);
