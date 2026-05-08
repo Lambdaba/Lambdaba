@@ -7,7 +7,7 @@ namespace Lambdaba;
 /// <summary>
 /// The Validated type constructor (brand type for HKTs).
 /// </summary>
-public class Validated :
+public partial class Validated :
     Monad<Validated>,
     Data<Validated>
 {
@@ -46,7 +46,7 @@ public class Validated :
 /// </summary>
 /// <typeparam name="A">The contained value type.</typeparam>
 [Union]
-public class Validated<A> :
+public partial class Validated<A> :
     Validated,
     Data<Validated, A>,
     IUnion

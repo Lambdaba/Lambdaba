@@ -118,7 +118,7 @@ public partial class Maybe<A> :
 /// </summary>
 /// <typeparam name="A"></typeparam>
 [Union]
-public class MaybeMonoid<A> :
+public partial class MaybeMonoid<A> :
     IUnion,
     Monoid<MaybeMonoid<A>> 
     where A : Semigroup<A>
