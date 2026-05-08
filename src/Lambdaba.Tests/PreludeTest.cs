@@ -1,58 +1,53 @@
-
 namespace Lambdaba.Tests;
 
 using static Lambdaba.Base;
+using Assert = TUnit.Assertions.Assert;
 
 public class PreludeTests
 {
-    [Fact]
-    public void TestId()
+    [Test]
+    public async Task TestId()
     {
-        Xunit.Assert.Equal(1, Id<int>()(1));
+        await Assert.That(Id<int>()(1)).IsEqualTo(1);
     }
 
-    [Fact]
-    public void TestConstant()
+    [Test]
+    public async Task TestConstant()
     {
-        Xunit.Assert.Equal(1, Const<int, int>()(1)(2));
+        await Assert.That(Const<int, int>()(1)(2)).IsEqualTo(1);
     }
 
-    [Fact]
-    public void TestCompose()
+    [Test]
+    public async Task TestCompose()
     {
-        Xunit.Assert.Equal(3, Compose(a => a + 1, Id<int>())(2));
+        await Assert.That(Compose(a => a + 1, Id<int>())(2)).IsEqualTo(3);
     }
 
-    [Fact]
-    public void TestFlip()
+    [Test]
+    public async Task TestFlip()
     {
         var flipStringConcat = Flip<string, string, string>(a => b => a + b);
         var result = flipStringConcat("Hello")("World");
 
-        Xunit.Assert.Equal("WorldHello", result);
-
+        await Assert.That(result).IsEqualTo("WorldHello");
 
         flipStringConcat = Flip<string, string, string>()(a => b => a + b);
         result = flipStringConcat("Hello")("World");
 
-        Xunit.Assert.Equal("WorldHello", result);
+        await Assert.That(result).IsEqualTo("WorldHello");
     }
 
-    
-
-    [Fact]
-    public void TestSTimes()
+    [Test]
+    public async Task TestSTimes()
     {
-        static A f<A>(A xs, Int multiplier) 
-            where A : Semigroup<A> => 
+        static A f<A>(A xs, Int multiplier)
+            where A : Semigroup<A> =>
                 A.STimes(multiplier, xs);
 
         Types.List<Int> xs = [1];
 
         Types.List<Int> expected = [1, 1, 1];
 
-        Xunit.Assert.Equal(expected, f(xs, 3));
+        await Assert.That(f(xs, 3)).IsEquivalentTo(expected);
     }
-
-    
 }
